@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from .controllers import sandwiches as sandwiches_controller
 from .controllers import resources as resources_controller
+from .controllers import recipes as recipes_controller
 
 from .models import models, schemas
 from .controllers import orders
@@ -127,3 +128,38 @@ def delete_one_resource(resource_id: int, db: Session = Depends(get_db)):
     if db_resource is None:
         raise HTTPException(status_code=404, detail="Resource not found")
     return resources_controller.delete(db=db, resource_id=resource_id)
+
+# Recipes Endpoints
+
+@app.post("/recipes/", response_model=schemas.Recipe, tags=["Recipes"])
+def create_recipe(recipe: schemas.RecipeCreate, db: Session = Depends(get_db)):
+    return recipes_controller.create(db=db, recipe=recipe)
+
+
+@app.get("/recipes/", response_model=list[schemas.Recipe], tags=["Recipes"])
+def read_recipes(db: Session = Depends(get_db)):
+    return recipes_controller.read_all(db)
+
+
+@app.get("/recipes/{recipe_id}", response_model=schemas.Recipe, tags=["Recipes"])
+def read_one_recipe(recipe_id: int, db: Session = Depends(get_db)):
+    db_recipe = recipes_controller.read_one(db, recipe_id=recipe_id)
+    if db_recipe is None:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    return db_recipe
+
+
+@app.put("/recipes/{recipe_id}", response_model=schemas.Recipe, tags=["Recipes"])
+def update_one_recipe(recipe_id: int, recipe: schemas.RecipeUpdate, db: Session = Depends(get_db)):
+    db_recipe = recipes_controller.read_one(db, recipe_id=recipe_id)
+    if db_recipe is None:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    return recipes_controller.update(db=db, recipe_id=recipe_id, recipe=recipe)
+
+
+@app.delete("/recipes/{recipe_id}", tags=["Recipes"])
+def delete_one_recipe(recipe_id: int, db: Session = Depends(get_db)):
+    db_recipe = recipes_controller.read_one(db, recipe_id=recipe_id)
+    if db_recipe is None:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    return recipes_controller.delete(db=db, recipe_id=recipe_id)
