@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .controllers import sandwiches as sandwiches_controller
 from .controllers import resources as resources_controller
 from .controllers import recipes as recipes_controller
+from .controllers import order_details as order_details_controller
 
 from .models import models, schemas
 from .controllers import orders
@@ -163,3 +164,38 @@ def delete_one_recipe(recipe_id: int, db: Session = Depends(get_db)):
     if db_recipe is None:
         raise HTTPException(status_code=404, detail="Recipe not found")
     return recipes_controller.delete(db=db, recipe_id=recipe_id)
+
+# Order Details Endpoints
+
+@app.post("/order_details/", response_model=schemas.OrderDetail, tags=["Order Details"])
+def create_order_detail(order_detail: schemas.OrderDetailCreate, db: Session = Depends(get_db)):
+    return order_details_controller.create(db=db, order_detail=order_detail)
+
+
+@app.get("/order_details/", response_model=list[schemas.OrderDetail], tags=["Order Details"])
+def read_order_details(db: Session = Depends(get_db)):
+    return order_details_controller.read_all(db)
+
+
+@app.get("/order_details/{order_detail_id}", response_model=schemas.OrderDetail, tags=["Order Details"])
+def read_one_order_detail(order_detail_id: int, db: Session = Depends(get_db)):
+    db_order_detail = order_details_controller.read_one(db, order_detail_id=order_detail_id)
+    if db_order_detail is None:
+        raise HTTPException(status_code=404, detail="Order Detail not found")
+    return db_order_detail
+
+
+@app.put("/order_details/{order_detail_id}", response_model=schemas.OrderDetail, tags=["Order Details"])
+def update_one_order_detail(order_detail_id: int, order_detail: schemas.OrderDetailUpdate, db: Session = Depends(get_db)):
+    db_order_detail = order_details_controller.read_one(db, order_detail_id=order_detail_id)
+    if db_order_detail is None:
+        raise HTTPException(status_code=404, detail="Order Detail not found")
+    return order_details_controller.update(db=db, order_detail_id=order_detail_id, order_detail=order_detail)
+
+
+@app.delete("/order_details/{order_detail_id}", tags=["Order Details"])
+def delete_one_order_detail(order_detail_id: int, db: Session = Depends(get_db)):
+    db_order_detail = order_details_controller.read_one(db, order_detail_id=order_detail_id)
+    if db_order_detail is None:
+        raise HTTPException(status_code=404, detail="Order Detail not found")
+    return order_details_controller.delete(db=db, order_detail_id=order_detail_id)
