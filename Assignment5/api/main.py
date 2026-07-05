@@ -2,6 +2,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from .controllers import sandwiches as sandwiches_controller
+from .controllers import resources as resources_controller
 
 from .models import models, schemas
 from .controllers import orders
@@ -21,6 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Orders Endpoints
 
 @app.post("/orders/", response_model=schemas.Order, tags=["Orders"])
 def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
@@ -55,6 +57,8 @@ def delete_one_order(order_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     return orders.delete(db=db, order_id=order_id)
 
+# Sandwiches Endpoints
+
 @app.post("/sandwiches/", response_model=schemas.Sandwich, tags=["Sandwiches"])
 def create_sandwich(sandwich: schemas.SandwichCreate, db: Session = Depends(get_db)):
     return sandwiches_controller.create(db=db, sandwich=sandwich)
@@ -87,3 +91,39 @@ def delete_one_sandwich(sandwich_id: int, db: Session = Depends(get_db)):
     if db_sandwich is None:
         raise HTTPException(status_code=404, detail="Sandwich not found")
     return sandwiches_controller.delete(db=db, sandwich_id=sandwich_id)
+
+
+# Resources Endpoints
+
+@app.post("/resources/", response_model=schemas.Resource, tags=["Resources"])
+def create_resource(resource: schemas.ResourceCreate, db: Session = Depends(get_db)):
+    return resources_controller.create(db=db, resource=resource)
+
+
+@app.get("/resources/", response_model=list[schemas.Resource], tags=["Resources"])
+def read_resources(db: Session = Depends(get_db)):
+    return resources_controller.read_all(db)
+
+
+@app.get("/resources/{resource_id}", response_model=schemas.Resource, tags=["Resources"])
+def read_one_resource(resource_id: int, db: Session = Depends(get_db)):
+    db_resource = resources_controller.read_one(db, resource_id=resource_id)
+    if db_resource is None:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    return db_resource
+
+
+@app.put("/resources/{resource_id}", response_model=schemas.Resource, tags=["Resources"])
+def update_one_resource(resource_id: int, resource: schemas.ResourceUpdate, db: Session = Depends(get_db)):
+    db_resource = resources_controller.read_one(db, resource_id=resource_id)
+    if db_resource is None:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    return resources_controller.update(db=db, resource_id=resource_id, resource=resource)
+
+
+@app.delete("/resources/{resource_id}", tags=["Resources"])
+def delete_one_resource(resource_id: int, db: Session = Depends(get_db)):
+    db_resource = resources_controller.read_one(db, resource_id=resource_id)
+    if db_resource is None:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    return resources_controller.delete(db=db, resource_id=resource_id)
